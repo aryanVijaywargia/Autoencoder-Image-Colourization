@@ -3,6 +3,7 @@ from src.unet_model import UNet
 from src.utils import *
 import numpy as np
 from src.config import *
+from tensorflow.keras import load_model
 
 def main():
     
@@ -17,15 +18,25 @@ def main():
     print('Test gray images shape:',test_gray_image.shape)
     print('Test color images shape:',test_color_image.shape)
 
-    model = UNet()
-    history,model = model.train(train_gray_image, train_color_image)
-    model.evaluate(test_gray_image,test_color_image)
     
-    plotModelHistory(history) 
+    if USE_PRETRAINED == True:
+        model =  load_model('saved_models/model.hdf5')
+        model.evaluate(test_gray_image,test_color_image)
+        for i in range(50,58):
+            predicted = np.clip(model.predict(test_gray_image[i].reshape(1,SIZE, SIZE,3)),0.0,1.0).reshape(SIZE, SIZE,3)
+            plot_images(test_color_image[i],test_gray_image[i],predicted)
+        
+    else:
     
-    for i in range(50,58):
-        predicted = np.clip(model.predict(test_gray_image[i].reshape(1,SIZE, SIZE,3)),0.0,1.0).reshape(SIZE, SIZE,3)
-        plot_images(test_color_image[i],test_gray_image[i],predicted)
+        model = UNet()
+        history,model = model.train(train_gray_image, train_color_image)
+        model.evaluate(test_gray_image,test_color_image)
+            
+        plotModelHistory(history) 
+    
+        for i in range(50,58):
+            predicted = np.clip(model.predict(test_gray_image[i].reshape(1,SIZE, SIZE,3)),0.0,1.0).reshape(SIZE, SIZE,3)
+            plot_images(test_color_image[i],test_gray_image[i],predicted)
 
 if __name__ == "__main__":
     main()
